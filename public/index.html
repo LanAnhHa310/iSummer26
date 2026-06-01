@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iSUMMER 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-height:100vh}
+
+/* ── Header ── */
+.header{background:linear-gradient(135deg,#1C3A5E,#2C5282);padding:14px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.logo{font-size:22px;font-weight:800;color:#E8711A;letter-spacing:1px}
+.logo span{color:#fff;font-size:14px;font-weight:400;display:block;letter-spacing:0}
+.date-wrap{margin-left:auto;display:flex;align-items:center;gap:8px}
+.date-wrap label{color:#cbd5e0;font-size:13px}
+#datePicker{border:none;border-radius:8px;padding:7px 12px;font-size:14px;font-weight:600;color:#1C3A5E;background:#fff;cursor:pointer}
+
+/* ── Tabs ── */
+.tabs{display:flex;background:#1A3A5C;overflow-x:auto;gap:2px;padding:0 8px}
+.tab{flex:1;min-width:80px;padding:12px 8px;text-align:center;font-size:13px;font-weight:600;color:#90a4c0;cursor:pointer;border-bottom:3px solid transparent;transition:.2s;white-space:nowrap}
+.tab:hover{color:#fff}
+.tab.active{color:#E8711A;border-bottom-color:#E8711A}
+.tab .icon{display:block;font-size:20px;margin-bottom:2px}
+
+/* ── Page ── */
+.page{display:none;padding:16px;max-width:900px;margin:0 auto}
+.page.active{display:block}
+
+/* ── Cards & layout ── */
+.card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:14px}
+.section-title{font-size:16px;font-weight:700;color:#1C3A5E;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.badge{background:#E8711A;color:#fff;border-radius:20px;padding:2px 10px;font-size:12px}
+
+/* ── Summary bar ── */
+.summary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.sum-chip{border-radius:20px;padding:6px 16px;font-size:13px;font-weight:700;flex:1;text-align:center;min-width:90px}
+.sum-present{background:#d4edda;color:#1a6630}
+.sum-late{background:#fff3cd;color:#856404}
+.sum-absent{background:#f8d7da;color:#842029}
+.sum-total{background:#dbeafe;color:#1e40af}
+
+/* ── Attendance grid ── */
+.group-label{font-size:11px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:1px;padding:6px 0 4px;border-bottom:1px solid #e2e8f0;margin-bottom:8px}
+.student-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9}
+.student-row:last-child{border-bottom:none}
+.student-name{flex:1;font-size:14px;font-weight:600}
+.student-grp-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.att-btns{display:flex;gap:6px}
+.att-btn{border:2px solid #e2e8f0;background:#fff;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;color:#64748b}
+.att-btn:hover{transform:scale(1.05)}
+.att-btn.active-present{background:#d4edda;border-color:#28a745;color:#155724}
+.att-btn.active-late{background:#fff3cd;border-color:#ffc107;color:#856404}
+.att-btn.active-absent{background:#f8d7da;border-color:#dc3545;color:#721c24}
+
+/* ── Color diary grid ── */
+.diary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.diary-card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);text-align:center;border:3px solid transparent;transition:.2s}
+.diary-card.picked{box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.diary-card-name{font-size:13px;font-weight:700;margin-bottom:10px;color:#1C3A5E}
+.emotion-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.emo-btn{border:none;background:none;cursor:pointer;border-radius:8px;padding:5px 3px;font-size:18px;transition:.15s;line-height:1}
+.emo-btn:hover{transform:scale(1.2)}
+.emo-btn.selected{background:#1C3A5E22;outline:2px solid #1C3A5E}
+.picked-label{margin-top:8px;font-size:12px;font-weight:700;padding:3px 8px;border-radius:20px;display:inline-block}
+
+/* ── Kiosk mode ── */
+#kiosk{display:none;position:fixed;inset:0;z-index:999;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+#kiosk.show{display:flex}
+.kiosk-name{font-size:42px;font-weight:800;color:#fff;text-align:center;margin-bottom:10px;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+.kiosk-prompt{font-size:18px;color:rgba(255,255,255,.85);margin-bottom:40px;text-align:center}
+.kiosk-emotions{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;max-width:700px}
+.kiosk-emo{border:none;border-radius:20px;padding:20px 28px;font-size:15px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:120px;transition:.2s;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.kiosk-emo:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.kiosk-emo .big-emoji{font-size:44px;line-height:1}
+.kiosk-close{position:fixed;top:20px;right:20px;background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:44px;height:44px;font-size:20px;cursor:pointer}
+.kiosk-progress{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.7);font-size:14px}
+.kiosk-skip{position:fixed;bottom:24px;right:24px;background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;cursor:pointer}
+
+/* ── Student management ── */
+.add-form{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.add-form input,.add-form select{border:2px solid #e2e8f0;border-radius:10px;padding:9px 14px;font-size:14px;outline:none;flex:1;min-width:140px}
+.add-form input:focus,.add-form select:focus{border-color:#E8711A}
+.btn{border:none;border-radius:10px;padding:9px 20px;font-size:14px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-primary{background:#E8711A;color:#fff}
+.btn-primary:hover{background:#d4611a}
+.btn-danger{background:#fff;border:2px solid #dc3545;color:#dc3545;padding:5px 12px;font-size:12px}
+.btn-danger:hover{background:#dc3545;color:#fff}
+.btn-kiosk{background:linear-gradient(135deg,#6C3FC5,#9B59B6);color:#fff;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.student-list-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9}
+.student-list-item:last-child{border-bottom:none}
+.grp-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+
+/* ── Reports ── */
+.report-select{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.report-select select{border:2px solid #e2e8f0;border-radius:10px;padding:8px 14px;font-size:14px;outline:none;flex:1}
+.emotion-calendar{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.cal-day{display:flex;flex-direction:column;align-items:center;gap:3px}
+.cal-date{font-size:10px;color:#64748b;font-weight:600}
+.cal-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
+.cal-empty{background:#f1f5f9}
+.emotion-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#475569}
+.legend-dot{width:14px;height:14px;border-radius:50%}
+.att-table{width:100%;border-collapse:collapse;font-size:13px}
+.att-table th{background:#1C3A5E;color:#fff;padding:8px 12px;text-align:left}
+.att-table td{padding:8px 12px;border-bottom:1px solid #f1f5f9}
+.att-table tr:hover td{background:#F8FAFC}
+.no-data{text-align:center;padding:40px;color:#94a3b8;font-size:15px}
+
+/* ── Group colors ── */
+.grp-a{background:#dbeafe;color:#1e40af}
+.grp-b{background:#d4edda;color:#155724}
+.grp-c{background:#fff3cd;color:#856404}
+.grp-d{background:#f8d7da;color:#842029}
+
+.dot-a{background:#3B82F6}
+.dot-b{background:#22C55E}
+.dot-c{background:#F59E0B}
+.dot-d{background:#EF4444}
+
+@media(max-width:480px){
+  .diary-grid{grid-template-columns:repeat(2,1fr)}
+  .kiosk-emotions{gap:10px}
+  .kiosk-emo{min-width:100px;padding:14px 16px}
+  .kiosk-emo .big-emoji{font-size:36px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="header">
+  <div class="logo">iSUMMER<span>DAY CAMP 2026</span></div>
+  <div class="date-wrap">
+    <label>Ngày:</label>
+    <input type="date" id="datePicker">
+  </div>
+</div>
+
+<!-- ── Tabs ── -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('attend')">
+    <span class="icon">📋</span>Điểm danh
+  </div>
+  <div class="tab" onclick="switchTab('diary')">
+    <span class="icon">🎨</span>Nhật ký màu
+  </div>
+  <div class="tab" onclick="switchTab('students')">
+    <span class="icon">👥</span>Học sinh
+  </div>
+  <div class="tab" onclick="switchTab('report')">
+    <span class="icon">📊</span>Báo cáo
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 1: ĐIỂM DANH
+══════════════════════════════════════════════════ -->
+<div class="page active" id="page-attend">
+  <div class="summary">
+    <div class="sum-chip sum-present">✅ Có mặt: <span id="cnt-present">0</span></div>
+    <div class="sum-chip sum-late">⏰ Trễ: <span id="cnt-late">0</span></div>
+    <div class="sum-chip sum-absent">❌ Vắng: <span id="cnt-absent">0</span></div>
+    <div class="sum-chip sum-total">👦 Tổng: <span id="cnt-total">0</span></div>
+  </div>
+  <div class="card" id="attend-list">
+    <div class="no-data">Đang tải danh sách...</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 2: NHẬT KÝ MÀU
+══════════════════════════════════════════════════ -->
+<div class="page" id="page-diary">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+    <div class="section-title">🎨 Nhật ký màu hôm nay</div>
+    <button class="btn btn-kiosk" onclick="startKiosk()">
+      🖥️ Kiosk Mode <small style="font-weight:400;font-size:11px">(cho các em tự chọn)</small>
+    </button>
+  </div>
+  <div class="diary-grid" id="diary-grid">
+    <div class="no-data">Đang tải...</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 3: HỌC SINH
+══════════════════════════════════════════════════ -->
+<div class="page" id="page-students">
+  <div class="card">
+    <div class="section-title">➕ Thêm học sinh</div>
+    <div class="add-form">
+      <input id="inp-name" type="text" placeholder="Tên học sinh" />
+      <select id="inp-grp">
+        <option value="Nhóm A">Nhóm A</option>
+        <option value="Nhóm B">Nhóm B</option>
+        <option value="Nhóm C">Nhóm C</option>
+        <option value="Nhóm D">Nhóm D</option>
+      </select>
+      <button class="btn btn-primary" onclick="addStudent()">Thêm</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">👥 Danh sách học sinh <span class="badge" id="student-count">0</span></div>
+    <div id="student-list"><div class="no-data">Chưa có học sinh</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 4: BÁO CÁO
+══════════════════════════════════════════════════ -->
+<div class="page" id="page-report">
+  <!-- Emotion chart per student -->
+  <div class="card">
+    <div class="section-title">🎨 Biểu đồ cảm xúc</div>
+    <div class="report-select">
+      <select id="report-student" onchange="loadStudentDiary()">
+        <option value="">— Chọn học sinh —</option>
+      </select>
+    </div>
+    <div id="emotion-chart"><div class="no-data">Chọn học sinh để xem biểu đồ cảm xúc</div></div>
+    <div class="emotion-legend" id="emotion-legend"></div>
+  </div>
+  <!-- Attendance summary -->
+  <div class="card">
+    <div class="section-title">📋 Tổng hợp điểm danh</div>
+    <div id="att-summary"><div class="no-data">Đang tải...</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     KIOSK MODE OVERLAY
+══════════════════════════════════════════════════ -->
+<div id="kiosk">
+  <button class="kiosk-close" onclick="closeKiosk()">✕</button>
+  <div class="kiosk-name" id="kiosk-name">—</div>
+  <div class="kiosk-prompt">Hôm nay em cảm thấy thế nào? 👇</div>
+  <div class="kiosk-emotions" id="kiosk-emotions"></div>
+  <div class="kiosk-progress" id="kiosk-progress"></div>
+  <button class="kiosk-skip" onclick="kioskNext()">Bỏ qua ›</button>
+</div>
+
+<script>
+// ── Emotions config ────────────────────────────────────────────────────────────
+const EMOTIONS = [
+  { value:'yellow',  color:'#FFD700', bg:'#FFF9C4', emoji:'😄', label:'Vui vẻ'   },
+  { value:'orange',  color:'#FF6B35', bg:'#FFE4D6', emoji:'🔥', label:'Hào hứng' },
+  { value:'red',     color:'#E74C3C', bg:'#FDECEA', emoji:'❤️', label:'Yêu thích'},
+  { value:'green',   color:'#27AE60', bg:'#E8F8F5', emoji:'🌿', label:'Bình yên' },
+  { value:'blue',    color:'#3498DB', bg:'#EBF5FB', emoji:'💙', label:'Tự tin'   },
+  { value:'purple',  color:'#9B59B6', bg:'#F4ECF7', emoji:'🌙', label:'Suy nghĩ' },
+  { value:'gray',    color:'#95A5A6', bg:'#F2F3F4', emoji:'🌧️', label:'Mệt/Buồn'},
+];
+
+const GRP_COLORS = {
+  'Nhóm A':{ dot:'dot-a', badge:'grp-a' },
+  'Nhóm B':{ dot:'dot-b', badge:'grp-b' },
+  'Nhóm C':{ dot:'dot-c', badge:'grp-c' },
+  'Nhóm D':{ dot:'dot-d', badge:'grp-d' },
+};
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let students = [];
+let attendData = {};   // student_id → status
+let diaryData  = {};   // student_id → {color, emotion}
+let kioskQueue = [];
+let kioskIdx   = 0;
+
+// ── Date ──────────────────────────────────────────────────────────────────────
+const dp = document.getElementById('datePicker');
+dp.value = new Date().toISOString().slice(0,10);
+dp.addEventListener('change', () => { loadAttend(); loadDiary(); });
+
+function getDate() { return dp.value; }
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['attend','diary','students','report'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if (name==='report') { loadReportStudents(); loadAttSummary(); }
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+async function api(method, url, body) {
+  const r = await fetch(url, {
+    method,
+    headers: body ? { 'Content-Type':'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return r.json();
+}
+
+// ── Students ──────────────────────────────────────────────────────────────────
+async function loadStudents() {
+  students = await api('GET','/api/students');
+  renderStudentList();
+  document.getElementById('student-count').textContent = students.length;
+}
+
+function grpStyle(grp) {
+  return GRP_COLORS[grp] || { dot:'dot-a', badge:'grp-a' };
+}
+
+function renderStudentList() {
+  const el = document.getElementById('student-list');
+  if (!students.length) { el.innerHTML='<div class="no-data">Chưa có học sinh</div>'; return; }
+  let html = ''; let lastGrp = '';
+  students.forEach(s => {
+    if (s.grp !== lastGrp) {
+      html += `<div class="group-label">${s.grp}</div>`;
+      lastGrp = s.grp;
+    }
+    const g = grpStyle(s.grp);
+    html += `<div class="student-list-item">
+      <div class="student-grp-dot ${g.dot}"></div>
+      <div style="flex:1;font-size:14px;font-weight:600">${s.name}</div>
+      <span class="grp-badge ${g.badge}">${s.grp}</span>
+      <button class="btn btn-danger" onclick="delStudent(${s.id})">✕</button>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+async function addStudent() {
+  const name = document.getElementById('inp-name').value.trim();
+  const grp  = document.getElementById('inp-grp').value;
+  if (!name) return;
+  await api('POST','/api/students',{ name, grp });
+  document.getElementById('inp-name').value = '';
+  await loadStudents();
+  loadAttend(); loadDiary();
+}
+
+async function delStudent(id) {
+  if (!confirm('Xoá học sinh này?')) return;
+  await api('DELETE',`/api/students/${id}`);
+  await loadStudents();
+  loadAttend(); loadDiary();
+}
+
+// ── Attendance ────────────────────────────────────────────────────────────────
+async function loadAttend() {
+  const rows = await api('GET', `/api/attendance/${getDate()}`);
+  attendData = {};
+  rows.forEach(r => { if (r.status) attendData[r.id] = r.status; });
+  renderAttend(rows);
+}
+
+function renderAttend(rows) {
+  const el = document.getElementById('attend-list');
+  if (!rows.length) { el.innerHTML='<div class="no-data">Chưa có học sinh. Vào tab Học sinh để thêm.</div>'; updateSummary(); return; }
+  let html=''; let lastGrp='';
+  rows.forEach(r => {
+    if (r.grp !== lastGrp) {
+      html += `<div class="group-label">${r.grp}</div>`;
+      lastGrp = r.grp;
+    }
+    const g = grpStyle(r.grp);
+    const st = r.status || '';
+    html += `<div class="student-row" id="att-row-${r.id}">
+      <div class="student-grp-dot ${g.dot}"></div>
+      <div class="student-name">${r.name}</div>
+      <div class="att-btns">
+        <button class="att-btn ${st==='present'?'active-present':''}" onclick="setAtt(${r.id},'present')">✅</button>
+        <button class="att-btn ${st==='late'   ?'active-late':''}"    onclick="setAtt(${r.id},'late')">⏰</button>
+        <button class="att-btn ${st==='absent' ?'active-absent':''}"  onclick="setAtt(${r.id},'absent')">❌</button>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+  updateSummary();
+}
+
+async function setAtt(id, status) {
+  // Toggle off if already selected
+  if (attendData[id] === status) {
+    delete attendData[id];
+    await api('POST','/api/attendance',{ student_id:id, date:getDate(), status:'' });
+  } else {
+    attendData[id] = status;
+    await api('POST','/api/attendance',{ student_id:id, date:getDate(), status });
+  }
+  // Re-render just that row
+  const row = document.getElementById(`att-row-${id}`);
+  if (row) {
+    const btns = row.querySelectorAll('.att-btn');
+    btns[0].className = `att-btn ${attendData[id]==='present'?'active-present':''}`;
+    btns[1].className = `att-btn ${attendData[id]==='late'   ?'active-late':''}`;
+    btns[2].className = `att-btn ${attendData[id]==='absent' ?'active-absent':''}`;
+  }
+  updateSummary();
+}
+
+function updateSummary() {
+  const vals = Object.values(attendData);
+  document.getElementById('cnt-present').textContent = vals.filter(v=>v==='present').length;
+  document.getElementById('cnt-late').textContent    = vals.filter(v=>v==='late').length;
+  document.getElementById('cnt-absent').textContent  = vals.filter(v=>v==='absent').length;
+  document.getElementById('cnt-total').textContent   = students.length;
+}
+
+// ── Diary ─────────────────────────────────────────────────────────────────────
+async function loadDiary() {
+  const rows = await api('GET', `/api/diary/${getDate()}`);
+  diaryData = {};
+  rows.forEach(r => { if (r.color) diaryData[r.id] = { color:r.color, emotion:r.emotion }; });
+  renderDiary(rows);
+}
+
+function emojiFor(colorVal) {
+  const e = EMOTIONS.find(e=>e.value===colorVal);
+  return e ? e.emoji : '⬜';
+}
+function labelFor(colorVal) {
+  const e = EMOTIONS.find(e=>e.value===colorVal);
+  return e ? e.label : '';
+}
+function bgFor(colorVal) {
+  const e = EMOTIONS.find(e=>e.value===colorVal);
+  return e ? e.bg : '#f1f5f9';
+}
+function colorFor(colorVal) {
+  const e = EMOTIONS.find(e=>e.value===colorVal);
+  return e ? e.color : '#94a3b8';
+}
+
+function renderDiary(rows) {
+  const el = document.getElementById('diary-grid');
+  if (!rows.length) { el.innerHTML='<div class="no-data">Chưa có học sinh.</div>'; return; }
+  let html='';
+  rows.forEach(r => {
+    const picked = diaryData[r.id];
+    const cardBg = picked ? bgFor(picked.color) : '#fff';
+    const borderColor = picked ? colorFor(picked.color) : 'transparent';
+    html += `<div class="diary-card" id="dc-${r.id}" style="background:${cardBg};border-color:${borderColor}">
+      <div class="diary-card-name">${r.name}</div>
+      <div class="emotion-grid">`;
+    EMOTIONS.forEach(e => {
+      const sel = picked && picked.color===e.value ? 'selected' : '';
+      html += `<button class="emo-btn ${sel}" title="${e.label}"
+        onclick="setDiary(${r.id},'${e.value}','${e.label}')">${e.emoji}</button>`;
+    });
+    html += `</div>`;
+    if (picked) {
+      html += `<div class="picked-label" style="background:${colorFor(picked.color)};color:#fff">
+        ${emojiFor(picked.color)} ${labelFor(picked.color)}</div>`;
+    }
+    html += `</div>`;
+  });
+  el.innerHTML = html;
+}
+
+async function setDiary(id, color, emotion) {
+  diaryData[id] = { color, emotion };
+  await api('POST','/api/diary',{ student_id:id, date:getDate(), color, emotion });
+  // Update card visually
+  const card = document.getElementById(`dc-${id}`);
+  if (!card) return;
+  const bg = bgFor(color); const border = colorFor(color);
+  card.style.background = bg; card.style.borderColor = border;
+  card.querySelectorAll('.emo-btn').forEach((b,i) => {
+    b.classList.toggle('selected', EMOTIONS[i].value === color);
+  });
+  const lbl = card.querySelector('.picked-label');
+  const newLbl = `<div class="picked-label" style="background:${border};color:#fff">${emojiFor(color)} ${labelFor(color)}</div>`;
+  if (lbl) lbl.outerHTML = newLbl;
+  else card.insertAdjacentHTML('beforeend', newLbl);
+}
+
+// ── Kiosk Mode ────────────────────────────────────────────────────────────────
+function startKiosk() {
+  kioskQueue = students.filter(s => true); // all students
+  kioskIdx = 0;
+  showKioskStudent();
+  const overlay = document.getElementById('kiosk');
+  overlay.classList.add('show');
+  // Pick a random gradient
+  const grads = [
+    'linear-gradient(135deg,#E8711A,#FF9A4D)',
+    'linear-gradient(135deg,#1C3A5E,#2980B9)',
+    'linear-gradient(135deg,#6C3FC5,#A855F7)',
+    'linear-gradient(135deg,#0F766E,#34D399)',
+    'linear-gradient(135deg,#B45309,#F59E0B)',
+  ];
+  overlay.style.background = grads[Math.floor(Math.random()*grads.length)];
+}
+
+function showKioskStudent() {
+  if (kioskIdx >= kioskQueue.length) { closeKiosk(); return; }
+  const s = kioskQueue[kioskIdx];
+  document.getElementById('kiosk-name').textContent = s.name;
+  document.getElementById('kiosk-progress').textContent =
+    `${kioskIdx+1} / ${kioskQueue.length}`;
+
+  const el = document.getElementById('kiosk-emotions');
+  el.innerHTML = EMOTIONS.map(e => `
+    <button class="kiosk-emo" style="background:${e.bg};color:#333"
+      onclick="kioskPick(${s.id},'${e.value}','${e.label}')">
+      <span class="big-emoji">${e.emoji}</span>
+      <span>${e.label}</span>
+    </button>`).join('');
+}
+
+async function kioskPick(id, color, emotion) {
+  await setDiary(id, color, emotion);
+  // Flash animation
+  const overlay = document.getElementById('kiosk');
+  overlay.style.transition='background .3s';
+  overlay.style.background = colorFor(color)+'AA';
+  setTimeout(()=>{ kioskNext(); },600);
+}
+
+function kioskNext() {
+  kioskIdx++;
+  showKioskStudent();
+}
+
+function closeKiosk() {
+  document.getElementById('kiosk').classList.remove('show');
+}
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+function loadReportStudents() {
+  const sel = document.getElementById('report-student');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Chọn học sinh —</option>';
+  students.forEach(s => {
+    sel.innerHTML += `<option value="${s.id}" ${s.id==cur?'selected':''}>${s.name} (${s.grp})</option>`;
+  });
+}
+
+async function loadStudentDiary() {
+  const id = document.getElementById('report-student').value;
+  const el = document.getElementById('emotion-chart');
+  if (!id) { el.innerHTML='<div class="no-data">Chọn học sinh để xem biểu đồ</div>'; return; }
+  const rows = await api('GET', `/api/report/diary/${id}`);
+  if (!rows.length) { el.innerHTML='<div class="no-data">Chưa có dữ liệu nhật ký màu</div>'; return; }
+
+  let html='<div class="emotion-calendar">';
+  rows.forEach(r => {
+    const d = new Date(r.date); const dateStr = `${d.getDate()}/${d.getMonth()+1}`;
+    html += `<div class="cal-day">
+      <div class="cal-date">${dateStr}</div>
+      <div class="cal-dot" style="background:${bgFor(r.color)};border:3px solid ${colorFor(r.color)}" title="${labelFor(r.color)}">${emojiFor(r.color)}</div>
+    </div>`;
+  });
+  html += '</div>';
+  el.innerHTML = html;
+
+  // Legend
+  const counts = {};
+  rows.forEach(r => { counts[r.color] = (counts[r.color]||0)+1; });
+  let legend='';
+  Object.entries(counts).sort((a,b)=>b[1]-a[1]).forEach(([c,n]) => {
+    legend+=`<div class="legend-item">
+      <div class="legend-dot" style="background:${colorFor(c)}"></div>
+      ${emojiFor(c)} ${labelFor(c)}: <strong>${n} ngày</strong></div>`;
+  });
+  document.getElementById('emotion-legend').innerHTML = legend;
+}
+
+async function loadAttSummary() {
+  const rows = await api('GET','/api/report/attendance-summary');
+  const el = document.getElementById('att-summary');
+  if (!rows.length) { el.innerHTML='<div class="no-data">Chưa có dữ liệu điểm danh</div>'; return; }
+  let html=`<table class="att-table">
+    <thead><tr><th>Học sinh</th><th>Nhóm</th><th>✅ Có mặt</th><th>⏰ Trễ</th><th>❌ Vắng</th></tr></thead><tbody>`;
+  rows.forEach(r => {
+    const g = grpStyle(r.grp);
+    html+=`<tr>
+      <td><strong>${r.name}</strong></td>
+      <td><span class="grp-badge ${g.badge}">${r.grp}</span></td>
+      <td style="color:#155724;font-weight:700">${r.present||0}</td>
+      <td style="color:#856404;font-weight:700">${r.late||0}</td>
+      <td style="color:#842029;font-weight:700">${r.absent||0}</td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  el.innerHTML=html;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  await loadStudents();
+  await loadAttend();
+  await loadDiary();
+}
+
+init();
+</script>
+</body>
+</html>
