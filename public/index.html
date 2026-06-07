@@ -125,6 +125,38 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
   .kiosk-emo{min-width:100px;padding:14px 16px}
   .kiosk-emo .big-emoji{font-size:36px}
 }
+
+.star-card{
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:10px;
+}
+
+.star-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.star-btn{
+  border:none;
+  border-radius:8px;
+  padding:6px 12px;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.star-add{
+  background:#FFD700;
+}
+
+.star-redeem{
+  background:#E8711A;
+  color:white;
+}
+
 </style>
 </head>
 <body>
@@ -152,6 +184,13 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
   <div class="tab" onclick="switchTab('report')">
     <span class="icon">📊</span>Báo cáo
   </div>
+  <div class="tab" onclick="switchTab('stars')">
+    <span class="icon">⭐</span>Sao
+  </div>
+  <div class="tab" onclick="switchTab('leaderboard')">
+    <span class="icon">🏆</span>Xếp hạng
+  </div>
+  
 </div>
 
 <!-- ══════════════════════════════════════════════════
@@ -227,6 +266,26 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
   </div>
 </div>
 
+<!-- ⭐ STAR SYSTEM -->
+<div class="page" id="page-stars">
+  <div class="card">
+    <div class="section-title">⭐ Sao & Thành tích</div>
+    <div id="stars-list">
+      <div class="no-data">Đang tải...</div>
+    </div>
+  </div>
+</div>
+
+<!-- 🏆 LEADERBOARD -->
+<div class="page" id="page-leaderboard">
+  <div class="card">
+    <div class="section-title">🏆 TOP SAO TRẠI HÈ</div>
+    <div id="leaderboard-list">
+      <div class="no-data">Đang tải...</div>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════════════════════
      KIOSK MODE OVERLAY
 ══════════════════════════════════════════════════ -->
@@ -296,7 +355,7 @@ function getDate() {
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t,i) => {
-    const names = ['attend','diary','students','report'];
+    const names = ['attend','diary','students','report','stars','leaderboard'];
     t.classList.toggle('active', names[i] === name);
   });
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -491,6 +550,7 @@ async function setDiary(id, color, emotion) {
   else card.insertAdjacentHTML('beforeend', newLbl);
 }
 
+
 // ── Kiosk Mode ────────────────────────────────────────────────────────────────
 function startKiosk() {
   kioskQueue = students.filter(s => true); // all students
@@ -603,11 +663,143 @@ async function loadAttSummary() {
   el.innerHTML=html;
 }
 
+function getBadge(stars){
+  if(stars >= 50) return '🏆 Superstar';
+  if(stars >= 30) return '👑 Leader';
+  return '⭐ Explorer';
+}
+
+async function addStars(id, amount){
+  await api(
+    'POST',
+    `/api/students/${id}/add-stars`,
+    { amount }
+  );
+
+  await loadStudents();
+  loadStars();
+  loadLeaderboard();
+}
+
+async function redeemReward(id){
+  await api(
+    'POST',
+    `/api/students/${id}/redeem`
+  );
+
+  await loadStudents();
+  loadStars();
+  loadLeaderboard();
+}
+
+async function loadStars(){
+
+  const rows = await api(
+    'GET',
+    '/api/students'
+  );
+
+  const el = document.getElementById('stars-list');
+
+  el.innerHTML = rows.map(s => {
+
+    let nextGoal = '';
+
+    if((s.lifetime_stars || 0) < 30){
+      nextGoal =
+        `👑 Leader còn ${30-(s.lifetime_stars||0)} sao nữa`;
+    }
+    else if((s.lifetime_stars || 0) < 50){
+      nextGoal =
+        `🏆 Superstar còn ${50-(s.lifetime_stars||0)} sao nữa`;
+    }
+
+    return `
+      <div class="star-card">
+
+        <strong>${s.name}</strong><br><br>
+
+        ⭐ Sao hiện có:
+        ${s.stars || 0}<br>
+
+        📈 Tổng sao:
+        ${s.lifetime_stars || 0}<br>
+
+        🎁 Đổi quà:
+        ${s.rewards_redeemed || 0} lần<br>
+
+        ${getBadge(s.lifetime_stars || 0)}<br>
+
+        ${nextGoal}
+
+        <div class="star-actions">
+
+          <button
+            class="star-btn star-add"
+            onclick="addStars(${s.id},1)">
+            +1
+          </button>
+
+          <button
+            class="star-btn star-add"
+            onclick="addStars(${s.id},3)">
+            +3
+          </button>
+
+          <button
+            class="star-btn star-add"
+            onclick="addStars(${s.id},5)">
+            +5
+          </button>
+
+          <button
+            class="star-btn star-redeem"
+            onclick="redeemReward(${s.id})">
+            🎁 Đổi quà
+          </button>
+
+        </div>
+
+      </div>
+    `;
+  }).join('');
+}
+
+async function loadLeaderboard(){
+
+  const rows = await api(
+    'GET',
+    '/api/leaderboard'
+  );
+
+  document.getElementById('leaderboard-list').innerHTML =
+    rows.map((s,i)=>`
+      <div class="student-list-item">
+
+        <strong>
+          ${i+1}. ${s.name}
+        </strong>
+
+        <div style="margin-left:auto">
+
+          ⭐ ${s.lifetime_stars}
+
+          ${getBadge(s.lifetime_stars)}
+
+        </div>
+
+      </div>
+    `).join('');
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   await loadStudents();
   await loadAttend();
   await loadDiary();
+
+  await loadStars();
+  await loadLeaderboard();
 }
 
 init();

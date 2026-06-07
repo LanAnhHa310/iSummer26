@@ -206,6 +206,84 @@ app.get('/api/report/attendance-summary', async (req, res) => {
   }
 });
 
+// ==================== STAR SYSTEM ====================
+
+// Add stars
+app.post('/api/students/:id/add-stars', async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    const result = await pool.query(
+      `
+      UPDATE students
+      SET
+        stars = stars + $1,
+        lifetime_stars = lifetime_stars + $1
+      WHERE id = $2
+      RETURNING *
+      `,
+      [amount, req.params.id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Redeem reward
+app.post('/api/students/:id/redeem', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+      UPDATE students
+      SET
+        stars = stars - 10,
+        rewards_redeemed = rewards_redeemed + 1
+      WHERE id = $1
+      AND stars >= 10
+      RETURNING *
+      `,
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({
+        error: 'Not enough stars'
+      });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Leaderboard
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+
+    const result = await pool.query(`
+      SELECT
+        id,
+        name,
+        grp,
+        stars,
+        lifetime_stars,
+        rewards_redeemed
+      FROM students
+      ORDER BY lifetime_stars DESC
+      LIMIT 10
+    `);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`iSUMMER running on port ${PORT}`);
 });
