@@ -36,8 +36,13 @@ app.post('/api/students', async (req, res) => {
     const { name, grp } = req.body;
 
     const result = await pool.query(
-      'INSERT INTO students(name, grp) VALUES($1,$2) RETURNING *',
-      [name, grp || 'Nhóm A']
+      'INSERT INTO students(name, grp, age, english_name) VALUES($1,$2,$3,$4) RETURNING *',
+      [
+        name, 
+        grp || 'Nhóm A',
+        age || null,
+        english_name || null
+      ]
     );
 
     res.json(result.rows[0]);
@@ -281,6 +286,47 @@ app.get('/api/leaderboard', async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/students/:id', async (req,res) => {
+  try {
+
+    const {
+      name,
+      age,
+      english_name,
+      grp
+    } = req.body;
+
+    const result = await pool.query(
+      `
+      UPDATE students
+      SET
+        name = $1,
+        age = $2,
+        english_name = $3,
+        grp = $4
+      WHERE id = $5
+      RETURNING *
+      `,
+      [
+        name,
+        age,
+        english_name,
+        grp,
+        req.params.id
+      ]
+    );
+
+    res.json(result.rows[0]);
+
+  } catch(err) {
+
+    res.status(500).json({
+      error: err.message
+    });
+
   }
 });
 

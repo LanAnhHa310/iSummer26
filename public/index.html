@@ -231,6 +231,8 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
     <div class="section-title">➕ Thêm học sinh</div>
     <div class="add-form">
       <input id="inp-name" type="text" placeholder="Tên học sinh" />
+      <input id="inp-age" type="number" min="4" max="15" placeholder="Tuổi">
+      <input id="inp-english-name" type="text" placeholder="Tên tiếng Anh">
       <select id="inp-grp">
         <option value="Nhóm A">Nhóm A (6-8)</option>
         <option value="Nhóm B">Nhóm B (9-12)</option>
@@ -396,8 +398,29 @@ function renderStudentList() {
     const g = grpStyle(s.grp);
     html += `<div class="student-list-item">
       <div class="student-grp-dot ${g.dot}"></div>
-      <div style="flex:1;font-size:14px;font-weight:600">${s.name}</div>
+      <div style="flex:1">
+
+      <div style="font-size:14px;font-weight:600">
+        ${s.name}
+      </div>
+
+      ${s.english_name
+        ? `<div style="font-size:12px;color:#64748b">
+            🇺🇸 ${s.english_name}
+          </div>`
+        : ''
+      }
+
+      ${s.age
+        ? `<div style="font-size:12px;color:#64748b">
+            🎂 ${s.age} tuổi
+          </div>`
+        : ''
+      }
+
+    </div>
       <span class="grp-badge ${g.badge}">${s.grp}</span>
+      <button class="btn" style="background:#3B82F6;color:white" onclick="editStudent(${s.id})">✏️</button>
       <button class="btn btn-danger" onclick="delStudent(${s.id})">✕</button>
     </div>`;
   });
@@ -407,8 +430,10 @@ function renderStudentList() {
 async function addStudent() {
   const name = document.getElementById('inp-name').value.trim();
   const grp  = document.getElementById('inp-grp').value;
+  const age = document.getElementById('inp-age').value;
+  const english_name = document.getElementById('inp-english-name').value.trim();
   if (!name) return;
-  await api('POST','/api/students',{ name, grp });
+  await api('POST','/api/students',{ name, grp, age, english_name });
   document.getElementById('inp-name').value = '';
   await loadStudents();
   loadAttend(); loadDiary();
@@ -790,6 +815,51 @@ async function loadLeaderboard(){
 
       </div>
     `).join('');
+}
+
+async function editStudent(id){
+
+  const s = students.find(x => x.id === id);
+
+  if(!s) return;
+
+  const name = prompt(
+    'Tên học sinh',
+    s.name || ''
+  );
+
+  if(name === null) return;
+
+  const english_name = prompt(
+    'Tên tiếng Anh',
+    s.english_name || ''
+  );
+
+  if(english_name === null) return;
+
+  const age = prompt(
+    'Tuổi',
+    s.age || ''
+  );
+
+  if(age === null) return;
+
+  await api(
+    'PUT',
+    `/api/students/${id}`,
+    {
+      name,
+      english_name,
+      age,
+      grp: s.grp
+    }
+  );
+
+  await loadStudents();
+  await loadStars();
+  await loadLeaderboard();
+
+  alert('✅ Đã cập nhật thông tin học sinh');
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
