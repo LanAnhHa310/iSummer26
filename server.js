@@ -48,13 +48,26 @@ app.post('/api/students', async (req, res) => {
 
 app.delete('/api/students/:id', async (req, res) => {
   try {
+    const id = req.params.id;
+
+    await pool.query(
+      'DELETE FROM attendance WHERE student_id = $1',
+      [id]
+    );
+
+    await pool.query(
+      'DELETE FROM diary WHERE student_id = $1',
+      [id]
+    );
+
     await pool.query(
       'DELETE FROM students WHERE id = $1',
-      [req.params.id]
+      [id]
     );
 
     res.json({ ok: true });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
