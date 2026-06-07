@@ -50,24 +50,21 @@ app.delete('/api/students/:id', async (req, res) => {
   try {
     const id = req.params.id;
 
-    await pool.query(
-      'DELETE FROM attendance WHERE student_id = $1',
+    console.log('Trying to delete student:', id);
+
+    await pool.query('DELETE FROM attendance WHERE student_id = $1', [id]);
+    await pool.query('DELETE FROM diary WHERE student_id = $1', [id]);
+
+    const result = await pool.query(
+      'DELETE FROM students WHERE id = $1 RETURNING *',
       [id]
     );
 
-    await pool.query(
-      'DELETE FROM diary WHERE student_id = $1',
-      [id]
-    );
-
-    await pool.query(
-      'DELETE FROM students WHERE id = $1',
-      [id]
-    );
+    console.log('Deleted:', result.rows);
 
     res.json({ ok: true });
   } catch (err) {
-    console.error(err);
+    console.error('DELETE ERROR:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -210,5 +207,5 @@ app.get('/api/report/attendance-summary', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🌈 iSUMMER running on port ${PORT}`);
+  console.log(`iSUMMER running on port ${PORT}`);
 });
