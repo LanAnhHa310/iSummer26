@@ -193,10 +193,8 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
     <div class="add-form">
       <input id="inp-name" type="text" placeholder="Tên học sinh" />
       <select id="inp-grp">
-        <option value="Nhóm A">Nhóm A</option>
-        <option value="Nhóm B">Nhóm B</option>
-        <option value="Nhóm C">Nhóm C</option>
-        <option value="Nhóm D">Nhóm D</option>
+        <option value="Nhóm A">Nhóm A (6-8)</option>
+        <option value="Nhóm B">Nhóm B (9-12)</option>
       </select>
       <button class="btn btn-primary" onclick="addStudent()">Thêm</button>
     </div>
@@ -244,13 +242,13 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
 <script>
 // ── Emotions config ────────────────────────────────────────────────────────────
 const EMOTIONS = [
-  { value:'yellow',  color:'#FFD700', bg:'#FFF9C4', emoji:'😄', label:'Vui vẻ'   },
-  { value:'orange',  color:'#FF6B35', bg:'#FFE4D6', emoji:'🔥', label:'Hào hứng' },
-  { value:'red',     color:'#E74C3C', bg:'#FDECEA', emoji:'❤️', label:'Yêu thích'},
-  { value:'green',   color:'#27AE60', bg:'#E8F8F5', emoji:'🌿', label:'Bình yên' },
-  { value:'blue',    color:'#3498DB', bg:'#EBF5FB', emoji:'💙', label:'Tự tin'   },
-  { value:'purple',  color:'#9B59B6', bg:'#F4ECF7', emoji:'🌙', label:'Suy nghĩ' },
-  { value:'gray',    color:'#95A5A6', bg:'#F2F3F4', emoji:'🌧️', label:'Mệt/Buồn'},
+  { value:'yellow', color:'#FFD700', bg:'#FFF9C4', emoji:'😄', label:'Vui vẻ' },
+  { value:'orange', color:'#FF6B35', bg:'#FFE4D6', emoji:'🤩', label:'Hào hứng' },
+  { value:'red', color:'#E74C3C', bg:'#FDECEA', emoji:'🥰', label:'Hạnh phúc' },
+  { value:'green', color:'#27AE60', bg:'#E8F8F5', emoji:'💪', label:'Tự tin' },
+  { value:'blue', color:'#3498DB', bg:'#EBF5FB', emoji:'😊', label:'Thoải mái' },
+  { value:'purple', color:'#9B59B6', bg:'#F4ECF7', emoji:'😟', label:'Lo lắng' },
+  { value:'gray', color:'#95A5A6', bg:'#F2F3F4', emoji:'😔', label:'Buồn/Mệt' }
 ];
 
 const GRP_COLORS = {
@@ -267,12 +265,33 @@ let diaryData  = {};   // student_id → {color, emotion}
 let kioskQueue = [];
 let kioskIdx   = 0;
 
-// ── Date ──────────────────────────────────────────────────────────────────────
-const dp = document.getElementById('datePicker');
-dp.value = new Date().toISOString().slice(0,10);
-dp.addEventListener('change', () => { loadAttend(); loadDiary(); });
+// ── Date handling (local timezone safe) ─────────────────────────────
 
-function getDate() { return dp.value; }
+const dp = document.getElementById('datePicker');
+
+function getLocalDate() {
+  const d = new Date();
+
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+// Set default date to today in user's local timezone
+dp.value = getLocalDate();
+
+// Reload data when teacher changes date
+dp.addEventListener('change', () => {
+  loadAttend();
+  loadDiary();
+});
+
+// Helper used throughout app
+function getDate() {
+  return dp.value;
+}
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function switchTab(name) {
