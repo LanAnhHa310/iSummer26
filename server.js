@@ -33,12 +33,28 @@ app.get('/api/students', async (req, res) => {
 
 app.post('/api/students', async (req, res) => {
   try {
-    const { name, grp } = req.body;
+
+    const {
+      name,
+      grp,
+      age,
+      english_name
+    } = req.body;
 
     const result = await pool.query(
-      'INSERT INTO students(name, grp, age, english_name) VALUES($1,$2,$3,$4) RETURNING *',
+      `
+      INSERT INTO students
+      (
+        name,
+        grp,
+        age,
+        english_name
+      )
+      VALUES ($1,$2,$3,$4)
+      RETURNING *
+      `,
       [
-        name, 
+        name,
         grp || 'Nhóm A',
         age || null,
         english_name || null
@@ -46,8 +62,15 @@ app.post('/api/students', async (req, res) => {
     );
 
     res.json(result.rows[0]);
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
   }
 });
 
