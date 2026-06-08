@@ -264,6 +264,12 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
   <!-- Attendance summary -->
   <div class="card">
     <div class="section-title">📋 Tổng hợp điểm danh</div>
+    <div style="margin-bottom:12px">
+    <button
+      class="btn btn-primary"
+      onclick="window.open('/api/export/students')">📥 Xuất CSV
+    </button>
+</div>
     <div id="att-summary"><div class="no-data">Đang tải...</div></div>
   </div>
 </div>

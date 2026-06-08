@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const { Parser } = require('json2csv');
 const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
@@ -351,6 +352,134 @@ app.put('/api/students/:id', async (req,res) => {
     });
 
   }
+});
+
+app.get('/api/export/students', async (req, res) => {
+
+  try {
+
+    const result = await pool.query(`
+      SELECT
+        s.name,
+        s.english_name,
+        s.age,
+        s.grp,
+
+        s.stars,
+        s.lifetime_stars,
+        s.rewards_redeemed,
+
+        COALESCE(
+          SUM(
+            CASE
+              WHEN a.status='present'
+              THEN 1
+              ELSE 0
+            END
+          ),
+          0
+        ) AS present,
+
+        COALESCE(
+          SUM(
+            CASE
+              WHEN a.status='late'
+              THEN 1
+              ELSE 0
+            END
+          ),
+          0
+        ) AS late,
+
+        COALESCE(
+          SUM(
+            CASE
+              WHEN a.status='absent'
+              THEN 1
+              ELSE 0
+            END
+          ),
+          0
+        ) AS absent
+
+      FROM students s
+
+      LEFT JOIN attendance a
+      ON s.id = a.student_id
+
+      GROUP BY s.id
+
+      ORDER BY s.grp, s.name
+    `);
+
+    const rows = result.rows.map(r => ({
+
+      name: r.name,
+
+      english_name:
+        r.english_name || '',
+
+      age:
+        r.age || '',
+
+      group:
+        r.grp,
+
+      current_stars:
+        r.stars,
+
+      lifetime_stars:
+        r.lifetime_stars,
+
+      rewards:
+        r.rewards_redeemed,
+
+      present:
+        r.present,
+
+      late:
+        r.late,
+
+      absent:
+        r.absent,
+
+      badge:
+        r.lifetime_stars >= 50
+          ? 'Superstar'
+          : r.lifetime_stars >= 30
+          ? 'Leader'
+          : 'Explorer'
+
+    }));
+
+    const parser = new Parser();
+
+    const csv =
+      parser.parse(rows);
+
+    res.header(
+      'Content-Type',
+      'text/csv'
+    );
+
+    res.attachment(
+      `isummer-report-${new Date()
+        .toISOString()
+        .slice(0,10)}.csv`
+    );
+
+    res.send(csv);
+
+  } catch(err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
 });
 
 app.listen(PORT, () => {
