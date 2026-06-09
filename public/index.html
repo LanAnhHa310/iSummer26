@@ -278,6 +278,16 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
 <div class="page" id="page-stars">
   <div class="card">
     <div class="section-title">⭐ Sao & Thành tích</div>
+    <div class="card" style="margin-bottom:12px">
+      <strong>🏅 Hệ thống huy hiệu</strong>
+      <div style="margin-top:8px;line-height:1.8">
+        🌱 Camp Explorer (0 - 29 ⭐)
+        <br>
+        👑 Team Leader (30 - 49 ⭐)
+        <br>
+        🏆 Superstar (50+ ⭐)
+      </div>
+    </div>
     <div id="stars-list">
       <div class="no-data">Đang tải...</div>
     </div>
@@ -696,8 +706,8 @@ async function loadAttSummary() {
 
 function getBadge(stars){
   if(stars >= 50) return '🏆 Superstar';
-  if(stars >= 30) return '👑 Leader';
-  return '⭐ Explorer';
+  if(stars >= 30) return '👑 Team Leader';
+  return '🌱 Camp Explorer';
 }
 
 async function addStars(id, amount){
@@ -753,9 +763,6 @@ async function loadStars(){
         ⭐ Sao hiện có:
         ${s.stars || 0}<br>
 
-        📈 Tổng sao:
-        ${s.lifetime_stars || 0}<br>
-
         🎁 Đổi quà:
         ${s.rewards_redeemed || 0} lần<br>
 
@@ -765,31 +772,33 @@ async function loadStars(){
 
         <div class="star-actions">
 
-          <button
-            class="star-btn star-add"
-            onclick="addStars(${s.id},1)">
-            +1
-          </button>
+        <button
+          class="star-btn"
+          style="background:#ef4444;color:white"
+          onclick="addStars(${s.id},-1)">
+          ➖1
+        </button>
 
-          <button
-            class="star-btn star-add"
-            onclick="addStars(${s.id},3)">
-            +3
-          </button>
+        <button
+          class="star-btn star-add"
+          onclick="addStars(${s.id},1)">
+          ➕1
+        </button>
 
-          <button
-            class="star-btn star-add"
-            onclick="addStars(${s.id},5)">
-            +5
-          </button>
+        <button
+          class="star-btn"
+          style="background:#3B82F6;color:white"
+          onclick="customStars(${s.id})">
+          ⚙️ Chỉnh
+        </button>
 
-          <button
-            class="star-btn star-redeem"
-            onclick="redeemReward(${s.id})">
-            🎁 Đổi quà
-          </button>
+        <button
+          class="star-btn star-redeem"
+          onclick="redeemReward(${s.id})">
+          🎁 Đổi quà
+        </button>
 
-        </div>
+      </div>
 
       </div>
     `;
@@ -808,7 +817,13 @@ async function loadLeaderboard(){
       <div class="student-list-item">
 
         <strong>
-          ${i+1}. ${s.name}
+          ${
+            i===0 ? '🥇' :
+            i===1 ? '🥈' :
+            i===2 ? '🥉' :
+            `#${i+1}`
+          }
+${s.name}
         </strong>
 
         <div style="margin-left:auto">
@@ -821,6 +836,23 @@ async function loadLeaderboard(){
 
       </div>
     `).join('');
+}
+
+async function customStars(id){
+
+  const amount = prompt(
+    'Nhập số sao (+ hoặc -)'
+  );
+
+  if(
+    amount === null ||
+    amount === ''
+  ) return;
+
+  await addStars(
+    id,
+    Number(amount)
+  );
 }
 
 async function editStudent(id){
