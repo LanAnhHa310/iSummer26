@@ -184,6 +184,9 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
   <div class="tab" onclick="switchTab('report')">
     <span class="icon">📊</span>Báo cáo
   </div>
+  <div class="tab" onclick="switchTab('evaluation')">
+    <span class="icon">📈</span>Đánh giá
+  </div>
   <div class="tab" onclick="switchTab('stars')">
     <span class="icon">⭐</span>Sao
   </div>
@@ -294,6 +297,405 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
   </div>
 </div>
 
+<!-- 📈 EVALUATION -->
+<div class="page" id="page-evaluation">
+
+  <div class="card">
+
+    <div class="section-title">
+      📈 Đánh giá phát triển
+    </div>
+    <div class="card">
+
+  <details>
+
+    <summary>
+      📖 Hướng dẫn chấm điểm
+    </summary>
+
+    <div style="margin-top:10px;line-height:1.8">
+
+      <strong>🌱 THANG ĐÁNH GIÁ CHUNG</strong>
+
+      <br><br>
+
+      <strong>5 - Xuất sắc</strong><br>
+      Thể hiện kỹ năng độc lập và nhất quán.
+
+      <br><br>
+
+      <strong>4 - Tốt</strong><br>
+      Thường xuyên thể hiện kỹ năng.
+
+      <br><br>
+
+      <strong>3 - Đạt yêu cầu</strong><br>
+      Thể hiện kỹ năng ở mức cơ bản.
+
+      <br><br>
+
+      <strong>2 - Đang phát triển</strong><br>
+      Cần nhắc nhở hoặc hỗ trợ.
+
+      <br><br>
+
+      <strong>1 - Cần hỗ trợ</strong><br>
+      Hiếm khi thể hiện kỹ năng.
+
+    </div>
+
+  </details>
+
+</div>
+    <label>Nhóm:</label>
+
+    <select
+      id="eval-group"
+      onchange="loadEvaluationStudents()">
+
+      <option value="">
+        Tất cả
+      </option>
+
+      <option value="Nhóm A">
+        Nhóm A
+      </option>
+
+      <option value="Nhóm B">
+        Nhóm B
+      </option>
+
+    </select>
+
+    <br><br>
+
+    <label>Học sinh:</label>
+
+    <select
+      id="eval-student"
+      onchange="loadEvaluation()">
+    </select>
+
+    <select
+    id="eval-week"
+    onchange="
+      loadEvaluation();
+      loadEvaluationStatus();
+    ">
+      <option value="1">Tuần 1</option>
+      <option value="4">Tuần 4</option>
+      <option value="8">Tuần 8</option>
+    </select>
+
+    <br><br>
+
+    <div class="criterion">
+
+    <strong>
+      🇬🇧 Giao tiếp tiếng Anh
+    </strong>
+
+    <br>
+
+    <label>
+      <input
+        type="radio"
+        name="english"
+        value="1"
+        onchange="updateEvaluationScore()">
+      1
+    </label>
+
+    <label>
+      <input
+        type="radio"
+        name="english"
+        value="2"
+        onchange="updateEvaluationScore()">
+      2
+    </label>
+
+    <label>
+      <input
+        type="radio"
+        name="english"
+        value="3"
+        onchange="updateEvaluationScore()">
+      3
+    </label>
+
+    <label>
+      <input
+        type="radio"
+        name="english"
+        value="4"
+        onchange="updateEvaluationScore()">
+      4
+    </label>
+
+    <label>
+      <input
+        type="radio"
+        name="english"
+        value="5"
+        onchange="updateEvaluationScore()">
+      5
+    </label>
+
+    </div>
+
+
+    <div class="criterion">
+
+      <strong>
+        🙋 Tham gia hoạt động
+          </strong>
+
+      <br>
+
+      <label>
+        <input
+          type="radio"
+          name="participation"
+          value="1"
+          onchange="updateEvaluationScore()">
+        1
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="participation"
+          value="2"
+          onchange="updateEvaluationScore()">
+        2
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="participation"
+          value="3"
+          onchange="updateEvaluationScore()">
+        3
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="participation"
+          value="4"
+          onchange="updateEvaluationScore()">
+        4
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="participation"
+          value="5"
+          onchange="updateEvaluationScore()">
+        5
+      </label>
+
+    </div>
+    <div class="criterion">
+
+      <strong>
+        🤝 Hợp tác với bạn bè
+      </strong>
+
+      <br>
+
+      <label>
+        <input
+          type="radio"
+          name="teamwork"
+          value="1"
+          onchange="updateEvaluationScore()">
+        1
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="teamwork"
+          value="2"
+          onchange="updateEvaluationScore()">
+        2
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="teamwork"
+          value="3"
+          onchange="updateEvaluationScore()">
+        3
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="teamwork"
+          value="4"
+          onchange="updateEvaluationScore()">
+        4
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="teamwork"
+          value="5"
+          onchange="updateEvaluationScore()">
+        5
+      </label>
+
+    </div>
+    <div class="criterion">
+
+      <strong>
+        🌱 Tinh thần học hỏi
+      </strong>
+
+      <br>
+
+      <label>
+        <input
+          type="radio"
+          name="learning"
+          value="1"
+          onchange="updateEvaluationScore()">
+        1
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="learning"
+          value="2"
+          onchange="updateEvaluationScore()">
+        2
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="learning"
+          value="3"
+          onchange="updateEvaluationScore()">
+        3
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="learning"
+          value="4"
+          onchange="updateEvaluationScore()">
+        4
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="learning"
+          value="5"
+          onchange="updateEvaluationScore()">
+        5
+      </label>
+
+    </div>
+
+    <div class="criterion">
+
+      <strong>
+        🎒 Tự quản bản thân
+      </strong>
+
+      <br>
+
+      <label>
+        <input
+          type="radio"
+          name="self_management"
+          value="1"
+          onchange="updateEvaluationScore()">
+        1
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="self_management"
+          value="2"
+          onchange="updateEvaluationScore()">
+        2
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="self_management"
+          value="3"
+          onchange="updateEvaluationScore()">
+        3
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="self_management"
+          value="4"
+          onchange="updateEvaluationScore()">
+        4
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="self_management"
+          value="5"
+          onchange="updateEvaluationScore()">
+        5
+      </label>
+
+    </div>
+
+    <br></br>
+    
+    <textarea
+      id="ev-comment"
+      rows="4"
+      style="width:100%"
+      placeholder="Nhận xét giáo viên">
+    </textarea>
+
+    <br><br>
+
+    <div id="evaluation-score"></div>
+
+    <button
+      class="btn btn-primary"
+      onclick="saveEvaluation()">
+
+      💾 Lưu đánh giá
+
+    </button>
+    <button
+      class="btn"
+      style="background:#f59e0b;color:white"
+      onclick="resetEvaluation()">
+
+      🔄 Đặt lại đánh giá
+    </button>
+
+  </div>
+  <div id="evaluation-progress"></div>
+
+</div>
+
 <!-- 🏆 LEADERBOARD -->
 <div class="page" id="page-leaderboard">
   <div class="card">
@@ -373,7 +775,7 @@ function getDate() {
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t,i) => {
-    const names = ['attend','diary','students','report','stars','leaderboard'];
+    const names = ['attend','diary','students','report','evaluation','stars','leaderboard'];
     t.classList.toggle('active', names[i] === name);
   });
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -452,6 +854,7 @@ async function addStudent() {
   await api('POST','/api/students',{ name, grp, age, english_name });
   document.getElementById('inp-name').value = '';
   await loadStudents();
+  loadEvaluationStudents();
   loadAttend(); loadDiary();
 }
 
@@ -459,6 +862,7 @@ async function delStudent(id) {
   if (!confirm('Xoá học sinh này?')) return;
   await api('DELETE',`/api/students/${id}`);
   await loadStudents();
+  loadEvaluationStudents();
   loadAttend(); loadDiary();
 }
 
@@ -894,20 +1298,400 @@ async function editStudent(id){
   );
 
   await loadStudents();
+  loadEvaluationStudents();
   await loadStars();
   await loadLeaderboard();
 
   alert('✅ Đã cập nhật thông tin học sinh');
 }
 
+// ========== Evaluation function ============
+
+async function loadEvaluation(){
+
+  const studentId =
+    document.getElementById('eval-student').value;
+
+  const week =
+    document.getElementById('eval-week').value;
+
+  const data =
+    await api(
+      'GET',
+      `/api/evaluation/${studentId}/${week}`
+    );
+
+  document
+    .querySelectorAll(
+      'input[type="radio"]'
+    )
+    .forEach(r=>r.checked=false);
+
+  if(data.english){
+    document.querySelector(
+      `input[name="english"][value="${data.english}"]`
+    )?.click();
+  }
+
+  if(data.participation){
+    document.querySelector(
+      `input[name="participation"][value="${data.participation}"]`
+    )?.click();
+  }
+
+  if(data.teamwork){
+    document.querySelector(
+      `input[name="teamwork"][value="${data.teamwork}"]`
+    )?.click();
+  }
+
+  if(data.learning){
+    document.querySelector(
+      `input[name="learning"][value="${data.learning}"]`
+    )?.click();
+  }
+
+  if(data.self_management){
+    document.querySelector(
+      `input[name="self_management"][value="${data.self_management}"]`
+    )?.click();
+  }
+
+  document.getElementById(
+    'ev-comment'
+  ).value =
+    data.teacher_comment || '';
+
+  updateEvaluationScore();
+}
+
+function loadEvaluationStudents(){
+
+  const group =
+    document.getElementById(
+      'eval-group'
+    ).value;
+
+  const sel =
+    document.getElementById(
+      'eval-student'
+    );
+
+  let filtered =
+    students;
+
+  if(group){
+
+    filtered =
+      students.filter(
+        s => s.grp === group
+      );
+
+  }
+
+  sel.innerHTML =
+    filtered.map(
+      s => `
+        <option value="${s.id}">
+          ${s.name}
+        </option>
+      `
+    ).join('');
+
+  if(filtered.length){
+
+    loadEvaluation();
+
+  }
+
+}
+
+async function saveEvaluation(){
+
+  await api(
+    'POST',
+    '/api/evaluation',
+    {
+      student_id:
+        document.getElementById('eval-student').value,
+
+      week:
+        document.getElementById('eval-week').value,
+
+      english:
+        document.querySelector(
+          'input[name="english"]:checked'
+        )?.value || 0,
+
+      participation:
+        document.querySelector(
+          'input[name="participation"]:checked'
+        )?.value || 0,
+
+      teamwork:
+        document.querySelector(
+          'input[name="teamwork"]:checked'
+        )?.value || 0,
+
+      learning:
+        document.querySelector(
+          'input[name="learning"]:checked'
+        )?.value || 0,
+
+      self_management:
+        document.querySelector(
+          'input[name="self_management"]:checked'
+        )?.value || 0,
+
+      teacher_comment:
+        document.getElementById('ev-comment').value
+    }
+  );
+
+  alert('✅ Đã lưu đánh giá');
+  await loadEvaluationStatus();
+}
+
+async function loadEvaluationStatus(){
+
+  const week =
+    document.getElementById(
+      'eval-week'
+    ).value;
+
+  const data =
+    await api(
+      'GET',
+      `/api/evaluations/status/${week}`
+    );
+
+  const done =
+    data.filter(
+      x => x.evaluated
+    ).length;
+
+  const total =
+    data.length;
+
+  const percent =
+    total
+      ? Math.round(done*100/total)
+      : 0;
+
+  const groupA =
+    data.filter(
+      x=>x.grp==='Nhóm A'
+    );
+
+  const groupB =
+    data.filter(
+      x=>x.grp==='Nhóm B'
+    );
+
+  document.getElementById(
+    'evaluation-progress'
+  ).innerHTML = `
+
+    <div class="card">
+
+      <strong>
+      📊 Tiến độ đánh giá
+      </strong>
+
+      <br><br>
+
+      ${done}/${total}
+      học sinh
+
+      <br>
+
+      ${percent}%
+
+    </div>
+
+    <div class="card">
+
+      <strong>🔵 Nhóm A</strong>
+
+      <br><br>
+
+      ${
+        groupA.map(
+          s=>`
+          ${s.evaluated?'✅':'⬜'}
+          ${s.name}<br>
+        `
+        ).join('')
+      }
+
+      <br>
+
+      <strong>🟢 Nhóm B</strong>
+
+      <br><br>
+
+      ${
+        groupB.map(
+          s=>`
+          ${s.evaluated?'✅':'⬜'}
+          ${s.name}<br>
+        `
+        ).join('')
+      }
+
+    </div>
+  `;
+}
+
+async function resetEvaluation(){
+
+  const studentId =
+    document.getElementById(
+      'eval-student'
+    ).value;
+
+  const week =
+    document.getElementById(
+      'eval-week'
+    ).value;
+
+  console.log(
+    'studentId:',
+    studentId
+  );
+
+  console.log(
+    'week:',
+    week
+  );
+
+  const url =
+    `/api/evaluation/${studentId}/${week}`;
+
+  console.log(
+    'DELETE URL:',
+    url
+  );
+
+  await fetch(
+    url,
+    {
+      method:'DELETE'
+    }
+  );
+  await loadEvaluationStatus();
+  document
+  .querySelectorAll(
+    'input[type="radio"]'
+  )
+  .forEach(
+    r=>r.checked=false
+  );
+
+  document.getElementById(
+    'ev-comment'
+  ).value='';
+
+  updateEvaluationScore();
+}
+
+function updateEvaluationScore(){
+
+  const english =
+    Number(
+      document.querySelector(
+        'input[name="english"]:checked'
+      )?.value || 0
+    );
+
+  const participation =
+    Number(
+      document.querySelector(
+        'input[name="participation"]:checked'
+      )?.value || 0
+    );
+
+  const teamwork =
+    Number(
+      document.querySelector(
+        'input[name="teamwork"]:checked'
+      )?.value || 0
+    );
+
+  const learning =
+    Number(
+      document.querySelector(
+        'input[name="learning"]:checked'
+      )?.value || 0
+    );
+
+  const selfManagement =
+    Number(
+      document.querySelector(
+        'input[name="self_management"]:checked'
+      )?.value || 0
+    );
+
+  const total =
+    english +
+    participation +
+    teamwork +
+    learning +
+    selfManagement;
+
+  let level = '';
+
+  if(total >= 22)
+  level =
+  '<span style="color:#16a34a">🌟 Xuất sắc</span>';
+
+  else if(total >= 18)
+    level =
+    '<span style="color:#2563eb">👍 Tốt</span>';
+
+  else if(total >= 13)
+    level =
+    '<span style="color:#f59e0b">🌱 Đạt yêu cầu</span>';
+
+  else
+    level =
+    '<span style="color:#dc2626">💪 Cần hỗ trợ</span>';
+
+  document.getElementById(
+    'evaluation-score'
+  ).innerHTML = `
+
+    <strong>
+      Tổng điểm:
+      ${total}/25
+    </strong>
+
+    <br>
+
+    ${level}
+
+  `;
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
+
   await loadStudents();
+  document.getElementById(
+    'eval-group'
+  ).value = 'Nhóm A';
+
+  loadEvaluationStudents();
+
   await loadAttend();
+
   await loadDiary();
 
   await loadStars();
+
   await loadLeaderboard();
+
+  await loadEvaluationStatus();
 }
 
 init();

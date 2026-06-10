@@ -482,6 +482,181 @@ app.get('/api/export/students', async (req, res) => {
 
 });
 
+// ==================== STUDENT EVALUATION ====================
+
+// Save evaluation
+app.post('/api/evaluation', async (req,res)=>{
+
+  try{
+
+    const {
+      student_id,
+      week,
+      english,
+      participation,
+      teamwork,
+      learning,
+      self_management,
+      teacher_comment
+    } = req.body;
+
+    await pool.query(
+      `
+      INSERT INTO evaluations
+      (
+        student_id,
+        week,
+        english,
+        participation,
+        teamwork,
+        learning,
+        self_management,
+        teacher_comment
+      )
+      VALUES
+      ($1,$2,$3,$4,$5,$6,$7,$8)
+
+      ON CONFLICT(student_id,week)
+
+      DO UPDATE SET
+
+      english = EXCLUDED.english,
+      participation = EXCLUDED.participation,
+      teamwork = EXCLUDED.teamwork,
+      learning = EXCLUDED.learning,
+      self_management = EXCLUDED.self_management,
+      teacher_comment = EXCLUDED.teacher_comment
+      `,
+      [
+        student_id,
+        week,
+        english,
+        participation,
+        teamwork,
+        learning,
+        self_management,
+        teacher_comment
+      ]
+    );
+
+    res.json({ok:true});
+
+  }catch(err){
+
+    res.status(500).json({
+      error:err.message
+    });
+
+  }
+});
+
+// Get evaluation
+app.get(
+  '/api/evaluation/:studentId/:week',
+  async(req,res)=>{
+
+    try{
+
+      const result = await pool.query(
+        `
+        SELECT *
+        FROM evaluations
+        WHERE student_id = $1
+        AND week = $2
+        `,
+        [
+          req.params.studentId,
+          req.params.week
+        ]
+      );
+
+      res.json(
+        result.rows[0] || {}
+      );
+
+    }catch(err){
+
+      res.status(500).json({
+        error: err.message
+      });
+
+    }
+
+});
+
+// Evaluation status
+app.get(
+  '/api/evaluations/status/:week',
+  async (req,res) => {
+
+    try {
+
+      const result = await pool.query(
+        `
+        SELECT
+          s.id,
+          s.name,
+          s.grp,
+
+          CASE
+            WHEN e.id IS NULL
+            THEN false
+            ELSE true
+          END AS evaluated
+
+        FROM students s
+
+        LEFT JOIN evaluations e
+        ON s.id = e.student_id
+        AND e.week = $1
+
+        ORDER BY s.grp, s.name
+        `,
+        [req.params.week]
+      );
+
+      res.json(result.rows);
+
+    } catch(err){
+
+      res.status(500).json({
+        error: err.message
+      });
+
+    }
+
+});
+
+app.delete(
+  '/api/evaluation/:studentId/:week',
+  async(req,res)=>{
+
+    try{
+
+      await pool.query(
+        `
+        DELETE FROM evaluations
+        WHERE student_id = $1
+        AND week = $2
+        `,
+        [
+          req.params.studentId,
+          req.params.week
+        ]
+      );
+
+      res.json({ ok:true });
+
+    }catch(err){
+
+      res.status(500).json({
+        error: err.message
+      });
+
+    }
+
+});
+
 app.listen(PORT, () => {
   console.log(`iSUMMER running on port ${PORT}`);
 });
