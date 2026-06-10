@@ -179,20 +179,20 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
   <div class="tab" onclick="switchTab('diary')">
     <span class="icon">🎨</span>Nhật ký màu
   </div>
-  <div class="tab" onclick="switchTab('students')">
-    <span class="icon">👥</span>Học sinh
+  <div class="tab" onclick="switchTab('stars')">
+    <span class="icon">⭐</span>Sao
   </div>
   <div class="tab" onclick="switchTab('evaluation')">
     <span class="icon">📈</span>Đánh giá
-  </div>
-  <div class="tab" onclick="switchTab('stars')">
-    <span class="icon">⭐</span>Sao
   </div>
   <div class="tab" onclick="switchTab('leaderboard')">
     <span class="icon">🏆</span>Xếp hạng
   </div>
   <div class="tab" onclick="switchTab('report')">
     <span class="icon">📊</span>Báo cáo
+  </div>
+  <div class="tab" onclick="switchTab('students')">
+    <span class="icon">👥</span>Danh sách học sinh
   </div>
   
 </div>
@@ -842,7 +842,7 @@ function getDate() {
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t,i) => {
-    const names = ['attend','diary','students','evaluation','stars','leaderboard','report'];
+    const names = ['attend','diary','stars','evaluation','leaderboard','report','students'];
     t.classList.toggle('active', names[i] === name);
   });
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
