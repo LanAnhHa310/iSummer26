@@ -354,123 +354,166 @@ app.put('/api/students/:id', async (req,res) => {
   }
 });
 
-app.get('/api/export/students', async (req, res) => {
+app.get('/api/export/students', async (req,res)=>{
 
-  try {
+  try{
 
-    const result = await pool.query(`
-      SELECT
-        s.name,
-        s.english_name,
-        s.age,
-        s.grp,
+    const students =
+      await pool.query(
+        `
+        SELECT *
+        FROM students
+        ORDER BY grp,name
+        `
+      );
 
-        s.stars,
-        s.lifetime_stars,
-        s.rewards_redeemed,
+    let csv = '';
 
-        COALESCE(
-          SUM(
-            CASE
-              WHEN a.status='present'
-              THEN 1
-              ELSE 0
-            END
-          ),
-          0
-        ) AS present,
+    for(const s of students.rows){
 
-        COALESCE(
-          SUM(
-            CASE
-              WHEN a.status='late'
-              THEN 1
-              ELSE 0
-            END
-          ),
-          0
-        ) AS late,
+      let badge = 'Camp Explorer';
 
-        COALESCE(
-          SUM(
-            CASE
-              WHEN a.status='absent'
-              THEN 1
-              ELSE 0
-            END
-          ),
-          0
-        ) AS absent
+      if(s.lifetime_stars >= 50)
+        badge = 'Superstar';
 
-      FROM students s
+      else if(s.lifetime_stars >= 30)
+        badge = 'Leader';
 
-      LEFT JOIN attendance a
-      ON s.id = a.student_id
+      csv += `
+====================================
+HỌC SINH
+====================================
 
-      GROUP BY s.id
+Tên,${s.name}
+Tên tiếng Anh,${s.english_name || ''}
+Tuổi,${s.age || ''}
+Nhóm,${s.grp}
 
-      ORDER BY s.grp, s.name
-    `);
+Sao hiện có,${s.stars}
+Tổng sao tích luỹ,${s.lifetime_stars}
+Đổi quà,${s.rewards_redeemed}
 
-    const rows = result.rows.map(r => ({
+Huy hiệu,${badge}
 
-      name: r.name,
+`;
 
-      english_name:
-        r.english_name || '',
+      // ATTENDANCE
 
-      age:
-        r.age || '',
+      const attendance =
+        await pool.query(
+          `
+          SELECT *
+          FROM attendance
+          WHERE student_id=$1
+          ORDER BY date
+          `,
+          [s.id]
+        );
 
-      group:
-        r.grp,
+      csv += `
+ĐIỂM DANH
 
-      current_stars:
-        r.stars,
+Ngày,Trạng thái
+`;
 
-      lifetime_stars:
-        r.lifetime_stars,
+      attendance.rows.forEach(a=>{
 
-      rewards:
-        r.rewards_redeemed,
+        csv += `
+${a.date},${a.status}
+`;
 
-      present:
-        r.present,
+      });
 
-      late:
-        r.late,
+      // DIARY
 
-      absent:
-        r.absent,
+      const diary =
+        await pool.query(
+          `
+          SELECT *
+          FROM diary
+          WHERE student_id=$1
+          ORDER BY date
+          `,
+          [s.id]
+        );
 
-      badge:
-        r.lifetime_stars >= 50
-          ? 'Superstar'
-          : r.lifetime_stars >= 30
-          ? 'Leader'
-          : 'Explorer'
+      csv += `
 
-    }));
+HÀNH TRÌNH CẢM XÚC
 
-    const parser = new Parser();
+Ngày,Cảm xúc
+`;
 
-    const csv =
-      parser.parse(rows);
+      diary.rows.forEach(d=>{
+
+        csv += `
+${d.date},${d.emotion}
+`;
+
+      });
+
+      // EVALUATIONS
+
+      const evaluations =
+        await pool.query(
+          `
+          SELECT *
+          FROM evaluations
+          WHERE student_id=$1
+          ORDER BY week
+          `,
+          [s.id]
+        );
+
+      csv += `
+
+ĐÁNH GIÁ PHÁT TRIỂN
+
+Tuần,English,Participation,Teamwork,Learning,Self Management,Tổng điểm,Nhận xét
+`;
+
+      evaluations.rows.forEach(e=>{
+
+        const total =
+          Number(e.english||0)+
+          Number(e.participation||0)+
+          Number(e.teamwork||0)+
+          Number(e.learning||0)+
+          Number(e.self_management||0);
+
+        csv += `
+${e.week},
+${e.english},
+${e.participation},
+${e.teamwork},
+${e.learning},
+${e.self_management},
+${total},
+"${e.teacher_comment || ''}"
+`;
+
+      });
+
+      csv += `
+
+====================================
+
+`;
+
+    }
 
     res.header(
       'Content-Type',
-      'text/csv'
+      'text/csv; charset=utf-8'
     );
 
     res.attachment(
-      `isummer-report-${new Date()
-        .toISOString()
-        .slice(0,10)}.csv`
+      `isummer-full-report.csv`
     );
 
     res.send(csv);
 
-  } catch(err) {
+  }catch(err){
 
     console.error(err);
 
@@ -654,6 +697,293 @@ app.delete(
       });
 
     }
+
+});
+
+// ==== EMOTION CHART ==== 
+app.get(
+  '/api/report/student/:id',
+  async (req,res)=>{
+
+    const student =
+      await pool.query(
+        `
+        SELECT
+          id,
+          name,
+          grp,
+          age,
+          english_name,
+          stars,
+          rewards_redeemed,
+          lifetime_stars
+        FROM students
+        WHERE id = $1
+        `,
+        [req.params.id]
+      );
+
+    const evaluations =
+      await pool.query(
+        `
+        SELECT
+          week,
+
+          (
+            english +
+            participation +
+            teamwork +
+            learning +
+            self_management
+          ) AS total_score
+
+        FROM evaluations
+
+        WHERE student_id = $1
+        `,
+        [req.params.id]
+      );
+
+    const result = {
+      ...student.rows[0],
+      week1: null,
+      week4: null,
+      week8: null
+    };
+
+    evaluations.rows.forEach(e => {
+
+      if(e.week == 1)
+        result.week1 = e.total_score;
+
+      if(e.week == 4)
+        result.week4 = e.total_score;
+
+      if(e.week == 8)
+        result.week8 = e.total_score;
+
+    });
+
+    res.json(result);
+
+});
+
+app.get(
+  '/api/report/diary/:id',
+  async(req,res)=>{
+
+    const result =
+      await pool.query(
+        `
+        SELECT
+          date,
+          color,
+          emotion
+
+        FROM diary
+
+        WHERE student_id = $1
+
+        ORDER BY date
+        `,
+        [req.params.id]
+      );
+
+    res.json(
+      result.rows
+    );
+
+});
+
+app.get('/api/export/student/:id', async (req,res)=>{
+
+  try{
+
+    const id = req.params.id;
+
+    const student =
+      await pool.query(
+        `
+        SELECT *
+        FROM students
+        WHERE id = $1
+        `,
+        [id]
+      );
+
+    if(!student.rows.length){
+
+      return res.status(404).send(
+        'Student not found'
+      );
+
+    }
+
+    const s = student.rows[0];
+
+    let badge = 'Camp Explorer';
+
+    if(
+      (s.lifetime_stars || 0)
+      >= 50
+    ){
+      badge = 'Superstar';
+    }
+    else if(
+      (s.lifetime_stars || 0)
+      >= 30
+    ){
+      badge = 'Leader';
+    }
+
+    let csv = '';
+
+    csv += `
+THÔNG TIN HỌC SINH
+
+Tên,${s.name}
+Tên tiếng Anh,${s.english_name || ''}
+Tuổi,${s.age || ''}
+Nhóm,${s.grp}
+
+Sao hiện có,${s.stars || 0}
+Tổng sao tích luỹ,${s.lifetime_stars || 0}
+
+Đổi quà,${s.rewards_redeemed || 0}
+
+Huy hiệu,${badge}
+
+`;
+
+    // ATTENDANCE
+
+    const attendance =
+      await pool.query(
+        `
+        SELECT *
+        FROM attendance
+        WHERE student_id = $1
+        ORDER BY date
+        `,
+        [id]
+      );
+
+    csv += `
+ĐIỂM DANH
+
+Ngày,Trạng thái
+`;
+
+    attendance.rows.forEach(a=>{
+
+      csv += `
+${a.date},${a.status}
+`;
+
+    });
+
+    // DIARY
+
+    const diary =
+      await pool.query(
+        `
+        SELECT *
+        FROM diary
+        WHERE student_id = $1
+        ORDER BY date
+        `,
+        [id]
+      );
+
+    csv += `
+
+HÀNH TRÌNH CẢM XÚC
+
+Ngày,Cảm xúc
+`;
+
+    diary.rows.forEach(d=>{
+
+      csv += `
+${d.date},${d.emotion || ''}
+`;
+
+    });
+
+    // EVALUATION
+
+    const evaluations =
+      await pool.query(
+        `
+        SELECT *
+        FROM evaluations
+        WHERE student_id = $1
+        ORDER BY week
+        `,
+        [id]
+      );
+
+    csv += `
+
+ĐÁNH GIÁ PHÁT TRIỂN
+
+Tuần,English,Participation,Teamwork,Learning,Self Management,Tổng điểm,Xếp loại,Nhận xét
+`;
+
+    evaluations.rows.forEach(e=>{
+
+      const total =
+        Number(e.english || 0) +
+        Number(e.participation || 0) +
+        Number(e.teamwork || 0) +
+        Number(e.learning || 0) +
+        Number(e.self_management || 0);
+
+      let level = '';
+
+      if(total >= 22)
+        level = 'Xuất sắc';
+      else if(total >= 18)
+        level = 'Tốt';
+      else if(total >= 13)
+        level = 'Đạt yêu cầu';
+      else
+        level = 'Cần hỗ trợ';
+
+      csv += `
+${e.week},
+${e.english},
+${e.participation},
+${e.teamwork},
+${e.learning},
+${e.self_management},
+${total},
+${level},
+"${e.teacher_comment || ''}"
+`;
+
+    });
+
+    res.header(
+      'Content-Type',
+      'text/csv; charset=utf-8'
+    );
+
+    res.attachment(
+      `HoSo_${s.name}.csv`
+    );
+
+    res.send(csv);
+
+  }catch(err){
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
 
 });
 

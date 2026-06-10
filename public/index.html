@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>iSUMMER 2026</title>
 <style>
@@ -181,9 +182,6 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
   <div class="tab" onclick="switchTab('students')">
     <span class="icon">👥</span>Học sinh
   </div>
-  <div class="tab" onclick="switchTab('report')">
-    <span class="icon">📊</span>Báo cáo
-  </div>
   <div class="tab" onclick="switchTab('evaluation')">
     <span class="icon">📈</span>Đánh giá
   </div>
@@ -192,6 +190,9 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
   </div>
   <div class="tab" onclick="switchTab('leaderboard')">
     <span class="icon">🏆</span>Xếp hạng
+  </div>
+  <div class="tab" onclick="switchTab('report')">
+    <span class="icon">📊</span>Báo cáo
   </div>
   
 </div>
@@ -255,24 +256,88 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
 <div class="page" id="page-report">
   <!-- Emotion chart per student -->
   <div class="card">
-    <div class="section-title">🎨 Biểu đồ cảm xúc</div>
+    <div class="section-title">🎨 BÁO CÁO SỰ PHÁT TRIỂN CỦA HỌC SINH </div>
     <div class="report-select">
-      <select id="report-student" onchange="loadStudentDiary()">
-        <option value="">— Chọn học sinh —</option>
+      <select id="report-group"
+        onchange="loadReportStudents()">
+
+        <option value="">
+          Tất cả nhóm
+        </option>
+
+        <option value="Nhóm A">
+          Nhóm A
+        </option>
+
+        <option value="Nhóm B">
+          Nhóm B
+        </option>
+
+      </select>
+
+      <select id="report-student"
+              onchange="loadStudentReport()">
+
       </select>
     </div>
-    <div id="emotion-chart"><div class="no-data">Chọn học sinh để xem biểu đồ cảm xúc</div></div>
+
+  </div>
+
+  <div
+    style="
+      display:flex;
+      gap:10px;
+      margin-bottom:15px;
+      flex-wrap:wrap;
+    ">
+
+    <button
+      class="btn btn-primary"
+      onclick="exportStudentReport()">
+
+      📥 Hồ sơ học sinh
+
+    </button>
+
+    <button
+      class="btn"
+      style="
+        background:#1C3A5E;
+        color:white;
+      "
+      onclick="
+        window.open(
+          '/api/export/students'
+        )
+      ">
+
+      📥 Toàn bộ trại hè
+
+    </button>
+
+  </div>
+    <div
+      id="student-snapshot"
+      class="card"
+      style="margin-bottom:12px">
+
+    </div>
+      <div class="section-title">
+        😊 Hành trình cảm xúc
+      </div>
+
+      <canvas
+        id="emotionChart"
+        height="120">
+      </canvas>
+
     <div class="emotion-legend" id="emotion-legend"></div>
   </div>
   <!-- Attendance summary -->
   <div class="card">
     <div class="section-title">📋 Tổng hợp điểm danh</div>
     <div style="margin-bottom:12px">
-    <button
-      class="btn btn-primary"
-      onclick="window.open('/api/export/students')">📥 Xuất CSV
-    </button>
-</div>
+  </div>
     <div id="att-summary"><div class="no-data">Đang tải...</div></div>
   </div>
 </div>
@@ -664,7 +729,7 @@ body{font-family:'Segoe UI',sans-serif;background:#F5F7FA;color:#1C3A5E;min-heig
     </div>
 
     <br></br>
-    
+
     <textarea
       id="ev-comment"
       rows="4"
@@ -729,6 +794,7 @@ const EMOTIONS = [
   { value:'purple', color:'#9B59B6', bg:'#F4ECF7', emoji:'😟', label:'Lo lắng' },
   { value:'gray', color:'#95A5A6', bg:'#F2F3F4', emoji:'😔', label:'Buồn/Mệt' }
 ];
+let emotionChart = null;
 
 const GRP_COLORS = {
   'Nhóm A':{ dot:'dot-a', badge:'grp-a' },
@@ -775,7 +841,7 @@ function getDate() {
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t,i) => {
-    const names = ['attend','diary','students','report','evaluation','stars','leaderboard'];
+    const names = ['attend','diary','students','evaluation','stars','leaderboard','report'];
     t.classList.toggle('active', names[i] === name);
   });
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1049,43 +1115,145 @@ function closeKiosk() {
 }
 
 // ── Reports ───────────────────────────────────────────────────────────────────
-function loadReportStudents() {
-  const sel = document.getElementById('report-student');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">— Chọn học sinh —</option>';
-  students.forEach(s => {
-    sel.innerHTML += `<option value="${s.id}" ${s.id==cur?'selected':''}>${s.name} (${s.grp})</option>`;
-  });
+function loadReportStudents(){
+
+  const group =
+    document.getElementById(
+      'report-group'
+    )?.value || '';
+
+  const sel =
+    document.getElementById(
+      'report-student'
+    );
+
+  let filtered =
+    students;
+
+  if(group){
+
+    filtered =
+      students.filter(
+        s => s.grp === group
+      );
+
+  }
+
+  sel.innerHTML =
+    filtered.map(
+      s => `
+        <option value="${s.id}">
+          ${s.name}
+        </option>
+      `
+    ).join('');
+
+  if(filtered.length){
+
+    loadStudentReport();
+
+  }
+
 }
 
-async function loadStudentDiary() {
-  const id = document.getElementById('report-student').value;
-  const el = document.getElementById('emotion-chart');
-  if (!id) { el.innerHTML='<div class="no-data">Chọn học sinh để xem biểu đồ</div>'; return; }
-  const rows = await api('GET', `/api/report/diary/${id}`);
-  if (!rows.length) { el.innerHTML='<div class="no-data">Chưa có dữ liệu nhật ký màu</div>'; return; }
+async function loadStudentReport(){
 
-  let html='<div class="emotion-calendar">';
-  rows.forEach(r => {
-    const d = new Date(r.date); const dateStr = `${d.getDate()}/${d.getMonth()+1}`;
-    html += `<div class="cal-day">
-      <div class="cal-date">${dateStr}</div>
-      <div class="cal-dot" style="background:${bgFor(r.color)};border:3px solid ${colorFor(r.color)}" title="${labelFor(r.color)}">${emojiFor(r.color)}</div>
-    </div>`;
-  });
-  html += '</div>';
-  el.innerHTML = html;
+  await loadStudentDiary();
 
-  // Legend
-  const counts = {};
-  rows.forEach(r => { counts[r.color] = (counts[r.color]||0)+1; });
-  let legend='';
-  Object.entries(counts).sort((a,b)=>b[1]-a[1]).forEach(([c,n]) => {
-    legend+=`<div class="legend-item">
-      <div class="legend-dot" style="background:${colorFor(c)}"></div>
-      ${emojiFor(c)} ${labelFor(c)}: <strong>${n} ngày</strong></div>`;
-  });
-  document.getElementById('emotion-legend').innerHTML = legend;
+  await loadStudentSnapshot();
+
+}
+
+function renderEmotionChart(
+  labels,
+  scores
+){
+
+  const ctx =
+    document.getElementById(
+      'emotionChart'
+    );
+
+  if(!ctx) return;
+
+  if(emotionChart){
+
+    emotionChart.destroy();
+
+  }
+
+  emotionChart =
+    new Chart(
+      ctx,
+      {
+
+        type:'line',
+
+        data:{
+
+          labels,
+
+          datasets:[{
+
+            label:'Cảm xúc',
+
+            data:scores,
+
+            borderWidth:3,
+
+            tension:0.3,
+
+            fill:false
+
+          }]
+
+        },
+
+        options:{
+
+          responsive:true,
+
+          scales:{
+
+            y:{
+
+              min:1,
+
+              max:5,
+
+              ticks:{
+
+                callback(value){
+
+                  const map = {
+
+                    1:'😢',
+
+                    2:'😕',
+
+                    3:'😐',
+
+                    4:'😊',
+
+                    5:'😍'
+
+                  };
+
+                  return map[value] || value;
+
+                }
+
+              }
+
+            }
+
+          }
+
+        }
+
+      }
+    );
+
 }
 
 async function loadAttSummary() {
@@ -1298,6 +1466,7 @@ async function editStudent(id){
   );
 
   await loadStudents();
+  loadReportStudents();
   loadEvaluationStudents();
   await loadStars();
   await loadLeaderboard();
@@ -1673,6 +1842,177 @@ function updateEvaluationScore(){
   `;
 }
 
+async function loadStudentSnapshot(){
+
+  const id =
+    document.getElementById(
+      'report-student'
+    ).value;
+
+  if(!id) return;
+
+  const s =
+    await api(
+      'GET',
+      `/api/report/student/${id}`
+    );
+
+  let badge = '🌱 Camp Explorer';
+
+  if(
+    (s.lifetime_stars || 0)
+    >= 50
+  ){
+    badge = '🏆 Superstar';
+  }
+  else if(
+    (s.lifetime_stars || 0)
+    >= 30
+  ){
+    badge = '👑 Team Leader';
+  }
+
+  document.getElementById(
+    'student-snapshot'
+  ).innerHTML = `
+
+    <h3>
+      👦 ${s.name}
+    </h3>
+
+    ${
+      s.english_name
+      ? `🇺🇸 ${s.english_name}<br>`
+      : ''
+    }
+
+    ${
+      s.age
+      ? `🎂 ${s.age} tuổi<br>`
+      : ''
+    }
+
+    <br>
+
+    ⭐ Sao hiện có:
+    ${s.stars || 0}
+
+    <br>
+
+    🎁 Đổi quà:
+    ${s.rewards_redeemed || 0}
+
+    <br>
+
+    ${badge}
+
+    <hr style="margin:10px 0">
+
+    📈 Tuần 1:
+    ${
+      s.week1
+      ? `${s.week1}/25`
+      : 'Chưa đánh giá'
+    }
+
+    <br>
+
+    📈 Tuần 4:
+    ${
+      s.week4
+      ? `${s.week4}/25`
+      : 'Chưa đánh giá'
+    }
+
+    <br>
+
+    📈 Tuần 8:
+    ${
+      s.week8
+      ? `${s.week8}/25`
+      : 'Chưa đánh giá'
+    }
+
+  `;
+}
+
+async function loadStudentDiary(){
+
+  const id =
+    document.getElementById(
+      'report-student'
+    ).value;
+
+  if(!id) return;
+
+  const rows =
+    await api(
+      'GET',
+      `/api/report/diary/${id}`
+    );
+
+  const moodMap = {
+
+    gray:1,
+    purple:2,
+    blue:3,
+    green:4,
+    yellow:4,
+    orange:5,
+    red:5
+
+  };
+
+  const labels =
+    rows.map(r=>
+
+      new Date(r.date)
+      .toLocaleDateString(
+        'vi-VN',
+        {
+          day:'2-digit',
+          month:'2-digit'
+        }
+      )
+
+    );
+
+  const scores =
+    rows.map(
+      r =>
+      moodMap[r.color] || 3
+    );
+
+  renderEmotionChart(
+    labels,
+    scores
+  );
+
+}
+
+function exportStudentReport(){
+
+  const id =
+    document.getElementById(
+      'report-student'
+    ).value;
+
+  if(!id){
+
+    alert(
+      'Chọn học sinh trước'
+    );
+
+    return;
+
+  }
+
+  window.open(
+    `/api/export/student/${id}`
+  );
+
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
 
@@ -1680,6 +2020,8 @@ async function init() {
   document.getElementById(
     'eval-group'
   ).value = 'Nhóm A';
+
+  loadReportStudents();
 
   loadEvaluationStudents();
 
